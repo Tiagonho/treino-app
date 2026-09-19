@@ -67,6 +67,9 @@ body{
   min-height:100%;
   transition:padding-bottom .15s ease;
 }
+body.standalone{
+  padding-top:calc(20px + env(safe-area-inset-top, 0px));
+}
 body.timer-open{
   padding-bottom:150px; /* fallback; ajustado dinamicamente via JS pela altura real da barra */
 }
@@ -332,6 +335,11 @@ button{font-family:inherit;}
       ]
     }
   ];
+
+  function isStandalone(){
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+  if(isStandalone()){ document.body.classList.add("standalone"); }
 
   var STORAGE_KEY = "treino_app_data_v1";
   var data = null;
@@ -728,7 +736,7 @@ button{font-family:inherit;}
     );
   }
 
-  if(pipSupported()){ pipBtn.hidden = false; }
+  if(pipSupported() && !isStandalone()){ pipBtn.hidden = false; }
 
   function pipFitText(text, font, maxWidth){
     pipCtx.font = font;
