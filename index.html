@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Treino & Descanso</title>
+<meta name="description" content="App de treino editável com cronômetro de descanso ajustável para acompanhar as séries dos 5 dias.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Treino">
+<meta name="theme-color" content="#121417">
+<style>
+:root{
+  --bg:#121417;
+  --surface:#1b1f24;
+  --surface-2:#22272e;
+  --border:#2c323a;
+  --text:#f2f0ec;
+  --muted:#9aa2ab;
+  --accent:#ff6a3d;
+  --accent-ink:#3a1505;
+  --ok:#3ddc97;
+  --ok-ink:#04291b;
+  --danger:#ff5468;
+  --radius:14px;
+}
+:root:not([data-theme="light"]){
+  color-scheme: dark;
+}
+:root[data-theme="light"]{
+  --bg:#f6f4f0;
+  --surface:#ffffff;
+  --surface-2:#efece6;
+  --border:#dcd7cd;
+  --text:#1a1a1a;
+  --muted:#6b6f73;
+  --accent:#e85a2a;
+  --accent-ink:#fff1ea;
+  --ok:#1f9d6f;
+  --ok-ink:#eafff6;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f6f4f0;
+    --surface:#ffffff;
+    --surface-2:#efece6;
+    --border:#dcd7cd;
+    --text:#1a1a1a;
+    --muted:#6b6f73;
+    --accent:#e85a2a;
+    --accent-ink:#fff1ea;
+    --ok:#1f9d6f;
+    --ok-ink:#eafff6;
+    color-scheme: light;
+  }
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  padding-inline:16px;
+  padding-block:20px 40px;
+  min-height:100%;
+  transition:padding-bottom .15s ease;
+}
+body.timer-open{
+  padding-bottom:150px; /* fallback; ajustado dinamicamente via JS pela altura real da barra */
+}
+h1,h2,h3{font-family:'Oswald',system-ui,sans-serif; text-transform:uppercase; letter-spacing:0.02em; margin:0;}
+.wrap{max-width:640px; margin:0 auto; display:flex; flex-direction:column; gap:16px;}
+.top{display:flex; align-items:baseline; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+.top h1{font-size:clamp(22px,5vw,30px); color:var(--text);}
+.top .sub{color:var(--muted); font-size:13px;}
+.tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; -webkit-overflow-scrolling:touch;}
+.tab{
+  flex:0 0 auto;
+  padding:8px 14px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  color:var(--muted);
+  font-family:'Oswald',sans-serif;
+  font-size:13px;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.tab.active{background:var(--accent); color:var(--accent-ink); border-color:var(--accent);}
+.tab.tab-done:not(.active){border-color:var(--ok); color:var(--ok);}
+.tab.tab-progress:not(.active){border-color:var(--accent); color:var(--accent);}
+.tab-icon{margin-right:4px;}
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  margin-bottom:24px;
+}
+.dayhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;}
+.dayhead h2{font-size:16px; color:var(--muted);}
+.editbtn{
+  background:none; border:1px solid var(--border); color:var(--muted);
+  border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:inherit;
+}
+.mobility{
+  display:flex; flex-direction:column; gap:6px; margin-bottom:14px;
+  border-left:3px solid var(--ok); padding-left:10px;
+}
+.mobility summary{cursor:pointer; font-size:13px; color:var(--ok); font-weight:600; list-style:none;}
+.mobility summary::-webkit-details-marker{display:none;}
+.mobility ul{margin:8px 0 0; padding-left:18px; font-size:13px; color:var(--muted); line-height:1.6;}
+.exlist{display:flex; flex-direction:column; gap:8px;}
+.ex{
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--surface-2);
+  padding:10px 12px;
+  transition:border-color .15s;
+}
+.ex.active{border-color:var(--accent);}
+.ex.ex-progress{border-color:var(--accent); background:linear-gradient(0deg, var(--surface-2), var(--surface-2));}
+.ex.ex-done{
+  border-color:var(--ok); background:color-mix(in srgb, var(--ok) 10%, var(--surface-2));
+  animation:cardCelebrate .5s ease-out;
+}
+.ex.ex-done .exname{color:var(--ok);}
+.ex.ex-done .exmeta{color:var(--ok); opacity:0.75;}
+@keyframes cardCelebrate{
+  0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--ok) 45%, transparent); }
+  100%{ box-shadow:0 0 0 10px color-mix(in srgb, var(--ok) 0%, transparent); }
+}
+.done-label{
+  color:var(--ok); font-size:13px; font-weight:600;
+  animation:doneLabelIn .35s ease-out;
+}
+@keyframes doneLabelIn{
+  0%{ opacity:0; transform:translateY(4px); }
+  100%{ opacity:1; transform:translateY(0); }
+}
+.tab{ transition:transform .12s ease; }
+.tab.tab-done{ animation:tabBounce .4s cubic-bezier(.34,1.56,.64,1); }
+@keyframes tabBounce{
+  0%{ transform:scale(.85); }
+  60%{ transform:scale(1.08); }
+  100%{ transform:scale(1); }
+}
+.exrow{display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer;}
+.exname{font-weight:600; font-size:14.5px;}
+.exmeta{color:var(--muted); font-size:12.5px; font-variant-numeric:tabular-nums;}
+.exbody{display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--border); flex-direction:column; gap:10px;}
+.ex.open .exbody{display:flex;}
+.setgrid{display:flex; gap:6px; flex-wrap:wrap;}
+.setchip{
+  width:34px; height:34px; border-radius:8px; border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--muted);
+  font-variant-numeric:tabular-nums;
+  transition:transform .15s ease;
+}
+.setchip.done{
+  background:var(--ok); border-color:var(--ok); color:var(--ok-ink); font-weight:700;
+  animation:chipPop .38s cubic-bezier(.34,1.56,.64,1);
+}
+.setchip.current{
+  border-color:var(--accent); color:var(--accent); font-weight:700;
+  animation:currentPulse 1.6s ease-in-out infinite;
+}
+@keyframes chipPop{
+  0%{ transform:scale(.5); }
+  60%{ transform:scale(1.18); }
+  100%{ transform:scale(1); }
+}
+@keyframes currentPulse{
+  0%,100%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 35%, transparent); }
+  50%{ box-shadow:0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+.actions{display:flex; gap:8px; flex-wrap:wrap;}
+button{font-family:inherit;}
+.btn{
+  border:none; border-radius:9px; padding:9px 14px; font-size:13px; font-weight:600; cursor:pointer;
+  transition:transform .1s ease, box-shadow .15s ease;
+}
+.btn:active{ transform:scale(.94); }
+.btn-start{background:var(--accent); color:var(--accent-ink);}
+.btn-finish{background:var(--ok); color:var(--ok-ink);}
+.btn-ghost{background:transparent; border:1px solid var(--border); color:var(--muted);}
+.editrow{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+.editrow input{
+  background:var(--bg); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:6px 8px; font-size:13px; font-family:inherit;
+}
+.editrow input.name{flex:1; min-width:120px;}
+.editrow input.num{width:52px; text-align:center;}
+.rm{background:none; border:none; color:var(--danger); cursor:pointer; font-size:16px; padding:2px 6px;}
+.addex{
+  display:flex; gap:6px; align-items:center; margin-top:4px;
+}
+.addex input{flex:1;}
+
+.timerbar{
+  position:fixed; left:0; right:0; bottom:0;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:none;
+  z-index:20;
+}
+.timerbar.show{display:block;}
+.timerinner{max-width:640px; margin:0 auto; display:flex; align-items:center; gap:14px; flex-wrap:wrap;}
+.timenum{
+  font-family:'Oswald',sans-serif; font-size:30px; font-variant-numeric:tabular-nums;
+  min-width:78px; color:var(--accent);
+}
+.timenum.urgent{ color:var(--danger); animation:timeUrgent 1s ease-in-out infinite; }
+@keyframes timeUrgent{
+  0%,100%{ transform:scale(1); }
+  50%{ transform:scale(1.08); }
+}
+.timerlabel{color:var(--muted); font-size:12px; flex-basis:100%;}
+.timeractions{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap;}
+.presetbtn{
+  border:1px solid var(--border); background:var(--surface-2); color:var(--muted);
+  border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer;
+}
+.presetbtn.selected{border-color:var(--accent); color:var(--accent);}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Treino da semana</h1>
+      <div class="sub">Toque no exercício para abrir as séries. Editável.</div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="dayContainer"></div>
+</div>
+
+<div class="timerbar" id="timerbar">
+  <div class="timerinner">
+    <div>
+      <div class="timenum" id="timenum">01:00</div>
+    </div>
+    <div class="timerlabel" id="timerlabel">Descanso</div>
+    <div class="timeractions">
+      <button class="presetbtn" data-s="60">60s</button>
+      <button class="presetbtn" data-s="90">90s</button>
+      <button class="presetbtn" data-s="120">120s</button>
+      <button class="btn btn-ghost" id="pauseBtn">Pausar</button>
+      <button class="btn btn-ghost" id="pipBtn" hidden>Flutuar</button>
+      <button class="btn btn-finish" id="closeTimer">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Elementos para o timer flutuante via Picture-in-Picture nativo.
+     O <video> precisa estar "visível" (opacity:0, não display:none) para o
+     captureStream/PiP funcionar de forma confiável no Safari iOS. -->
+<video id="pipVideo" muted playsinline style="position:fixed; left:0; top:0; width:1px; height:1px; opacity:0; pointer-events:none;"></video>
+<canvas id="pipCanvas" width="300" height="300" style="display:none;"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  var DEFAULT_DATA = [
+    {
+      id:"d1", name:"Dia 1", label:"Pernas + Ombro",
+      mobility:["Mobilidade de tornozelo (dorsiflexão na parede) — 2x10 cada lado","Agachamento no cabo de vassoura — 1min","Ponte de glúteo — 2x12","Mobilidade de quadril 90/90 — 2x8 cada lado","Leg swings — 15 cada lado"],
+      exercises:[
+        {name:"Agachamento", sets:3, reps:"10", rest:120},
+        {name:"Leg press", sets:3, reps:"12", rest:120},
+        {name:"Cadeira extensora", sets:3, reps:"12", rest:90},
+        {name:"Mesa flexora", sets:3, reps:"12", rest:90},
+        {name:"Elevação lateral", sets:4, reps:"15", rest:60},
+        {name:"Elevação frontal", sets:3, reps:"12", rest:60}
+      ]
+    },
+    {
+      id:"d2", name:"Dia 2", label:"Peito + Tríceps",
+      mobility:["Wall slides — 2x10","Rotação externa com elástico — 2x12","Face pull leve — 2x12","Mobilização torácica em 4 apoios — 2x8 cada lado"],
+      exercises:[
+        {name:"Supino reto", sets:3, reps:"10", rest:120},
+        {name:"Supino inclinado", sets:3, reps:"10", rest:120},
+        {name:"Crucifixo", sets:3, reps:"12", rest:90},
+        {name:"Tríceps corda", sets:3, reps:"12", rest:60},
+        {name:"Tríceps testa", sets:3, reps:"10", rest:90},
+        {name:"Mergulho / tríceps francês", sets:3, reps:"12", rest:60}
+      ]
+    },
+    {
+      id:"d3", name:"Dia 3", label:"Costas + Ombro post. + Bíceps",
+      mobility:["Dead hang — 20 a 30s","Cat-cow — 2x10","Retração cervical — 2x10","Mobilização torácica com rotação — 2x8 cada lado"],
+      exercises:[
+        {name:"Face pull", sets:4, reps:"15", rest:60},
+        {name:"Remada baixa", sets:3, reps:"12", rest:90},
+        {name:"Puxada frente", sets:3, reps:"12", rest:90},
+        {name:"Elevação posterior", sets:3, reps:"15", rest:60},
+        {name:"Rosca direta", sets:3, reps:"12", rest:60},
+        {name:"Rosca martelo", sets:3, reps:"12", rest:60}
+      ]
+    },
+    {
+      id:"d4", name:"Dia 4", label:"Pernas + Ombro",
+      mobility:["Mobilidade de tornozelo — 2x10 cada lado","Agachamento no cabo de vassoura — 1min","Ponte de glúteo — 2x12","Mobilidade de quadril 90/90 — 2x8 cada lado","Leg swings — 15 cada lado"],
+      exercises:[
+        {name:"Stiff", sets:3, reps:"10", rest:120},
+        {name:"Cadeira flexora", sets:3, reps:"12", rest:90},
+        {name:"Avanço", sets:3, reps:"12", rest:90},
+        {name:"Cadeira extensora", sets:3, reps:"12", rest:90},
+        {name:"Elevação lateral", sets:4, reps:"15", rest:60},
+        {name:"Elevação posterior", sets:3, reps:"15", rest:60}
+      ]
+    },
+    {
+      id:"d5", name:"Dia 5", label:"Ombro + Braços",
+      mobility:["Wall slides — 2x10","Rotação externa com elástico — 2x12","Face pull leve — 2x12","Mobilização torácica em 4 apoios — 2x8 cada lado"],
+      exercises:[
+        {name:"Desenvolvimento com halteres", sets:3, reps:"10", rest:120},
+        {name:"Elevação lateral", sets:4, reps:"15", rest:60},
+        {name:"Elevação frontal", sets:3, reps:"12", rest:60},
+        {name:"Rosca alternada", sets:3, reps:"12", rest:60},
+        {name:"Tríceps corda", sets:3, reps:"12", rest:60},
+        {name:"Rosca Scott", sets:3, reps:"10", rest:60}
+      ]
+    }
+  ];
+
+  var STORAGE_KEY = "treino_app_data_v1";
+  var data = null;
+  try{
+    var saved = localStorage.getItem(STORAGE_KEY);
+    data = saved ? JSON.parse(saved) : null;
+  }catch(e){ data = null; }
+  if(!data){ data = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
+
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }catch(e){}
+  }
+
+  var activeDay = data[0].id;
+  var editMode = {};
+
+  var tabsEl = document.getElementById("tabs");
+  var containerEl = document.getElementById("dayContainer");
+
+  function dayState(day){
+    var totalSets = 0, doneSets = 0;
+    day.exercises.forEach(function(ex){
+      totalSets += ex.sets;
+      doneSets += (ex._done||[]).filter(Boolean).length;
+    });
+    if(totalSets>0 && doneSets>=totalSets) return "done";
+    if(doneSets>0) return "progress";
+    return "upcoming";
+  }
+
+  function renderTabs(){
+    tabsEl.innerHTML = "";
+    data.forEach(function(day){
+      var b = document.createElement("button");
+      var state = dayState(day);
+      var cls = "tab" + (day.id===activeDay ? " active" : "");
+      if(state==="done") cls += " tab-done";
+      if(state==="progress") cls += " tab-progress";
+      b.className = cls;
+      var icon = state==="done" ? "✓" : (state==="progress" ? "●" : "");
+      b.innerHTML = (icon ? "<span class='tab-icon'>"+icon+"</span>" : "") + day.name;
+      b.addEventListener("click", function(){ activeDay = day.id; renderTabs(); renderDay(); });
+      tabsEl.appendChild(b);
+    });
+  }
+
+  function fmtTime(s){
+    var m = Math.floor(s/60);
+    var sec = s%60;
+    return (m<10?"0":"")+m+":"+(sec<10?"0":"")+sec;
+  }
+
+  function renderDay(){
+    renderTabs();
+    var day = data.find(function(d){ return d.id===activeDay; });
+    containerEl.innerHTML = "";
+
+    var card = document.createElement("div");
+    card.className = "card";
+
+    var head = document.createElement("div");
+    head.className = "dayhead";
+    head.innerHTML = "<h2>"+day.label+"</h2>";
+    var editBtn = document.createElement("button");
+    editBtn.className = "editbtn";
+    editBtn.textContent = editMode[day.id] ? "Concluir edição" : "Editar";
+    editBtn.addEventListener("click", function(){
+      editMode[day.id] = !editMode[day.id];
+      renderDay();
+    });
+    head.appendChild(editBtn);
+    card.appendChild(head);
+
+    var det = document.createElement("details");
+    det.className = "mobility";
+    var sum = document.createElement("summary");
+    sum.textContent = "Mobilidade antes do treino";
+    det.appendChild(sum);
+    var ul = document.createElement("ul");
+    day.mobility.forEach(function(m){
+      var li = document.createElement("li");
+      li.textContent = m;
+      ul.appendChild(li);
+    });
+    det.appendChild(ul);
+    card.appendChild(det);
+
+    var list = document.createElement("div");
+    list.className = "exlist";
+
+    day.exercises.forEach(function(ex, idx){
+      var exEl = document.createElement("div");
+      exEl.className = "ex";
+      if(ex._open) exEl.classList.add("open");
+      if(ex._active) exEl.classList.add("active");
+      var exDoneCount = (ex._done||[]).filter(Boolean).length;
+      if(exDoneCount >= ex.sets && ex.sets>0) exEl.classList.add("ex-done");
+      else if(exDoneCount > 0) exEl.classList.add("ex-progress");
+
+      var row = document.createElement("div");
+      row.className = "exrow";
+      row.addEventListener("click", function(){
+        ex._open = !ex._open;
+        renderDay();
+      });
+
+      var nameWrap = document.createElement("div");
+      if(editMode[day.id]){
+        nameWrap.className = "editrow";
+        var ni = document.createElement("input");
+        ni.className = "name";
+        ni.value = ex.name;
+        ni.addEventListener("click", function(e){ e.stopPropagation(); });
+        ni.addEventListener("input", function(){ ex.name = ni.value; save(); });
+        var si = document.createElement("input");
+        si.className = "num"; si.type="number"; si.min="1"; si.value = ex.sets;
+        si.title = "séries";
+        si.addEventListener("click", function(e){ e.stopPropagation(); });
+        si.addEventListener("input", function(){ ex.sets = parseInt(si.value)||1; ex._done=[]; save(); renderDay(); });
+        var ri = document.createElement("input");
+        ri.className = "num"; ri.value = ex.reps; ri.title="reps";
+        ri.addEventListener("click", function(e){ e.stopPropagation(); });
+        ri.addEventListener("input", function(){ ex.reps = ri.value; save(); });
+        var rm = document.createElement("button");
+        rm.className = "rm"; rm.textContent = "✕";
+        rm.title = "remover exercício";
+        rm.addEventListener("click", function(e){
+          e.stopPropagation();
+          day.exercises.splice(idx,1);
+          save(); renderDay();
+        });
+        nameWrap.appendChild(ni); nameWrap.appendChild(si);
+        var xspan=document.createElement("span"); xspan.style.color="var(--muted)"; xspan.style.fontSize="12px"; xspan.textContent="x";
+        nameWrap.appendChild(xspan);
+        nameWrap.appendChild(ri);
+        nameWrap.appendChild(rm);
+      } else {
+        var doneCountForName = (ex._done||[]).filter(Boolean).length;
+        var prefix = (doneCountForName >= ex.sets && ex.sets>0) ? "✓ " : "";
+        nameWrap.innerHTML = "<div class='exname'>"+prefix+ex.name+"</div>";
+      }
+
+      var meta = document.createElement("div");
+      meta.className = "exmeta";
+      if(!editMode[day.id]){
+        meta.textContent = ex.sets+"x"+ex.reps+" · desc. "+ex.rest+"s";
+      }
+
+      row.appendChild(nameWrap);
+      if(!editMode[day.id]) row.appendChild(meta);
+      exEl.appendChild(row);
+
+      if(!editMode[day.id]){
+        var body = document.createElement("div");
+        body.className = "exbody";
+
+        var chips = document.createElement("div");
+        chips.className = "setgrid";
+        if(!ex._done) ex._done = [];
+        var doneCount = ex._done.filter(Boolean).length;
+        var allDone = doneCount >= ex.sets;
+        for(var i=0;i<ex.sets;i++){
+          (function(i){
+            var chip = document.createElement("div");
+            var isCurrent = (!allDone && ex._inProgress && i===doneCount);
+            chip.className = "setchip" + (ex._done[i] ? " done" : "") + (isCurrent ? " current" : "");
+            chip.textContent = ex._done[i] ? "✓" : (i+1);
+            chips.appendChild(chip);
+          })(i);
+        }
+        body.appendChild(chips);
+
+        var actions = document.createElement("div");
+        actions.className = "actions";
+
+        if(allDone){
+          var doneLabel = document.createElement("div");
+          doneLabel.className = "done-label";
+          doneLabel.textContent = "Exercício concluído ✓";
+          actions.appendChild(doneLabel);
+        } else if(ex._inProgress){
+          var finishBtn = document.createElement("button");
+          finishBtn.className = "btn btn-finish";
+          finishBtn.textContent = "Finalizar série";
+          finishBtn.addEventListener("click", function(e){
+            e.stopPropagation();
+            var nextIdx = ex._done.length;
+            while(ex._done.length <= nextIdx) ex._done.push(false);
+            ex._done[nextIdx] = true;
+            ex._inProgress = false;
+            startRestTimer(ex.rest, ex.name, {name: ex.name, current: nextIdx+1, total: ex.sets});
+            save();
+            renderDay();
+          });
+          actions.appendChild(finishBtn);
+        } else {
+          var startBtn = document.createElement("button");
+          startBtn.className = "btn btn-start";
+          startBtn.textContent = "Iniciar exercício";
+          startBtn.addEventListener("click", function(e){
+            e.stopPropagation();
+            ex._inProgress = true;
+            ex._active = true;
+            save();
+            renderDay();
+          });
+          actions.appendChild(startBtn);
+        }
+
+        var resetBtn = document.createElement("button");
+        resetBtn.className = "btn btn-ghost";
+        resetBtn.textContent = "Reiniciar";
+        resetBtn.addEventListener("click", function(e){
+          e.stopPropagation();
+          ex._done = [];
+          ex._active = false;
+          ex._inProgress = false;
+          save();
+          renderDay();
+        });
+        actions.appendChild(resetBtn);
+        body.appendChild(actions);
+
+        exEl.appendChild(body);
+      }
+
+      list.appendChild(exEl);
+    });
+
+    card.appendChild(list);
+
+    if(editMode[day.id]){
+      var addRow = document.createElement("div");
+      addRow.className = "addex";
+      var addInput = document.createElement("input");
+      addInput.placeholder = "Novo exercício";
+      var addBtn = document.createElement("button");
+      addBtn.className = "btn btn-start";
+      addBtn.textContent = "Adicionar";
+      addBtn.addEventListener("click", function(){
+        var v = addInput.value.trim();
+        if(!v) return;
+        day.exercises.push({name:v, sets:3, reps:"12", rest:60});
+        addInput.value = "";
+        save(); renderDay();
+      });
+      addRow.appendChild(addInput);
+      addRow.appendChild(addBtn);
+      card.appendChild(addRow);
+    }
+
+    containerEl.appendChild(card);
+  }
+
+  // ---- rest timer ----
+  var timerbar = document.getElementById("timerbar");
+  var timenum = document.getElementById("timenum");
+  var timerlabel = document.getElementById("timerlabel");
+  var pauseBtn = document.getElementById("pauseBtn");
+  var closeTimerBtn = document.getElementById("closeTimer");
+  var presetBtns = Array.prototype.slice.call(document.querySelectorAll(".presetbtn"));
+
+  // Timer baseado em horário real (endTime), não em contagem de ticks —
+  // assim ele não "congela" quando o navegador pausa o setInterval
+  // (aba em segundo plano, tela bloqueada) e se recupera corretamente ao voltar.
+  var timer = { remaining:60, total:60, running:false, endTime:null, intervalId:null };
+  var pipMeta = { name: "", current: 0, total: 0 };
+
+  function updateTimerUI(){
+    var r = Math.max(0, timer.remaining);
+    timenum.textContent = fmtTime(r);
+    timenum.classList.toggle("urgent", timer.running && r>0 && r<=5);
+    presetBtns.forEach(function(b){
+      b.classList.toggle("selected", parseInt(b.dataset.s)===timer.total);
+    });
+    pauseBtn.textContent = timer.running ? "Pausar" : "Retomar";
+  }
+
+  function recompute(){
+    if(timer.running && timer.endTime){
+      timer.remaining = Math.round((timer.endTime - Date.now())/1000);
+    }
+  }
+
+  function tick(){
+    recompute();
+    if(timer.remaining <= 0){
+      timer.remaining = 0;
+      stopInterval();
+      timenum.textContent = "00:00";
+      timerlabel.textContent = "Descanso concluído!";
+      if(navigator.vibrate){ try{ navigator.vibrate([200,100,200]); }catch(e){} }
+      return;
+    }
+    updateTimerUI();
+  }
+
+  function stopInterval(){
+    if(timer.intervalId){ clearInterval(timer.intervalId); timer.intervalId = null; }
+    timer.running = false;
+    timer.endTime = null;
+  }
+
+  function startInterval(){
+    if(timer.intervalId){ clearInterval(timer.intervalId); }
+    timer.running = true;
+    timer.endTime = Date.now() + timer.remaining*1000;
+    timer.intervalId = setInterval(tick, 1000);
+    updateTimerUI();
+  }
+
+  function updateTimerBarSpacing(){
+    // Mede a altura real da barra (que varia conforme os botões quebram
+    // linha em telas menores) e reserva exatamente esse espaço no fim da
+    // página, pra ela nunca sobrepor o último item da lista.
+    requestAnimationFrame(function(){
+      if(timerbar.classList.contains("show")){
+        document.body.style.paddingBottom = (timerbar.offsetHeight + 24) + "px";
+      } else {
+        document.body.style.paddingBottom = "";
+      }
+    });
+  }
+
+  window.addEventListener("resize", updateTimerBarSpacing);
+
+  function startRestTimer(seconds, label, meta){
+    timer.total = seconds;
+    timer.remaining = seconds;
+    timerlabel.textContent = "Descanso — " + label;
+    pipMeta = meta || {name: label, current: 0, total: 0};
+    timerbar.classList.add("show");
+    document.body.classList.add("timer-open");
+    updateTimerBarSpacing();
+    startInterval();
+  }
+
+  presetBtns.forEach(function(b){
+    b.addEventListener("click", function(){
+      var s = parseInt(b.dataset.s);
+      timer.total = s;
+      timer.remaining = s;
+      startInterval();
+    });
+  });
+
+  pauseBtn.addEventListener("click", function(){
+    if(timer.running){
+      recompute();
+      stopInterval();
+      updateTimerUI();
+    } else {
+      startInterval();
+    }
+  });
+
+  closeTimerBtn.addEventListener("click", function(){
+    stopInterval();
+    stopPip();
+    timerbar.classList.remove("show");
+    document.body.classList.remove("timer-open");
+    updateTimerBarSpacing();
+  });
+
+  // Ao voltar para a aba/app, recalcula na hora em vez de esperar o próximo tick
+  document.addEventListener("visibilitychange", function(){
+    if(!document.hidden && timer.running){
+      tick();
+    }
+  });
+
+  // ---- timer flutuante (Picture-in-Picture) ----
+  // Desenha a contagem num <canvas>, captura como vídeo (canvas.captureStream)
+  // e pede ao sistema pra exibir esse vídeo em PiP.
+  //
+  // O desenho no canvas roda CONTÍNUO desde o carregamento da página (não só
+  // quando o PiP está ativo) e o stream de vídeo é criado UMA ÚNICA VEZ.
+  // Isso evita a falha "primeiro clique não funciona, segundo funciona":
+  // se a stream só existe e só tem o primeiro frame no exato instante do
+  // clique, o Safari às vezes tenta abrir o PiP antes do vídeo ter um frame
+  // decodificado e falha silenciosamente. Com o canvas já "vivo" há tempo,
+  // o vídeo sempre tem dados prontos quando o usuário pede o PiP.
+  var pipVideo = document.getElementById("pipVideo");
+  var pipCanvas = document.getElementById("pipCanvas");
+  var pipCtx = pipCanvas.getContext("2d");
+  var pipBtn = document.getElementById("pipBtn");
+  var pipActive = false;
+  var pipStreamReady = false;
+
+  function pipSupported(){
+    return !!(
+      (document.pictureInPictureEnabled && pipVideo.requestPictureInPicture) ||
+      (pipVideo.webkitSupportsPresentationMode && typeof pipVideo.webkitSetPresentationMode === "function")
+    );
+  }
+
+  if(pipSupported()){ pipBtn.hidden = false; }
+
+  function pipFitText(text, font, maxWidth){
+    pipCtx.font = font;
+    if(pipCtx.measureText(text).width <= maxWidth) return text;
+    var t = text;
+    while(t.length>1 && pipCtx.measureText(t+"…").width > maxWidth){
+      t = t.slice(0, -1);
+    }
+    return t+"…";
+  }
+
+  function drawPipFrame(){
+    var w = pipCanvas.width, h = pipCanvas.height;
+    var remaining = timer.remaining;
+    if(timer.running && timer.endTime){
+      remaining = Math.max(0, Math.round((timer.endTime - Date.now())/1000));
+    }
+    remaining = Math.max(0, remaining);
+    var pct = timer.total ? Math.max(0, Math.min(1, remaining/timer.total)) : 0;
+
+    pipCtx.fillStyle = "#121417";
+    pipCtx.fillRect(0,0,w,h);
+    pipCtx.textAlign = "center";
+    pipCtx.textBaseline = "middle";
+
+    // nome do exercício (topo, truncado se necessário)
+    var nameFont = "600 20px Inter, system-ui, sans-serif";
+    var name = pipMeta.name ? pipFitText(pipMeta.name, nameFont, w-40) : "Treino";
+    pipCtx.fillStyle = "#f2f0ec";
+    pipCtx.font = nameFont;
+    pipCtx.fillText(name, w/2, 34);
+
+    // série X de Y
+    if(pipMeta.total){
+      pipCtx.fillStyle = "#9aa2ab";
+      pipCtx.font = "600 15px Inter, system-ui, sans-serif";
+      pipCtx.fillText("Série " + pipMeta.current + " de " + pipMeta.total, w/2, 58);
+    }
+
+    // tempo grande, centro
+    pipCtx.fillStyle = remaining<=5 ? "#ff5468" : "#ff6a3d";
+    pipCtx.font = "700 68px 'Oswald', system-ui, sans-serif";
+    pipCtx.fillText(fmtTime(remaining), w/2, h/2 + 10);
+
+    pipCtx.fillStyle = "#9aa2ab";
+    pipCtx.font = "600 16px Inter, system-ui, sans-serif";
+    pipCtx.fillText(timer.running ? "Descanso" : "Parado", w/2, h/2 + 56);
+
+    var barX = 24, barY = h - 28, barW = w - 48, barH = 8;
+    pipCtx.fillStyle = "#2c323a";
+    pipCtx.fillRect(barX, barY, barW, barH);
+    pipCtx.fillStyle = "#3ddc97";
+    pipCtx.fillRect(barX, barY, barW*pct, barH);
+
+    requestAnimationFrame(drawPipFrame);
+  }
+
+  function ensurePipStream(){
+    if(pipStreamReady) return;
+    try{
+      var stream = pipCanvas.captureStream(30);
+      pipVideo.srcObject = stream;
+      pipVideo.play().catch(function(){});
+      pipStreamReady = true;
+    }catch(e){}
+  }
+
+  function requestPipMode(){
+    if(pipVideo.requestPictureInPicture){
+      pipVideo.requestPictureInPicture().catch(function(){ pipActive = false; pipBtn.textContent = "Flutuar"; });
+    } else if(pipVideo.webkitSupportsPresentationMode && typeof pipVideo.webkitSetPresentationMode === "function"){
+      // Safari iOS usa esta API antiga em vez da requestPictureInPicture padrão
+      try{
+        pipVideo.webkitSetPresentationMode("picture-in-picture");
+      }catch(e){
+        pipActive = false;
+        pipBtn.textContent = "Flutuar";
+      }
+    }
+  }
+
+  function startPip(){
+    // A stream já existe (criada no carregamento) — aqui só pedimos o modo
+    // PiP, de forma síncrona, dentro do próprio clique.
+    if(!pipSupported()) return;
+    ensurePipStream();
+    pipActive = true;
+    requestPipMode();
+    pipBtn.textContent = "Fechar flutuante";
+  }
+
+  function stopPip(){
+    if(!pipActive){ return; }
+    pipActive = false;
+    try{
+      if(document.pictureInPictureElement){
+        document.exitPictureInPicture();
+      } else if(pipVideo.webkitSetPresentationMode){
+        pipVideo.webkitSetPresentationMode("inline");
+      }
+    }catch(e){}
+    pipBtn.textContent = "Flutuar";
+  }
+
+  pipBtn.addEventListener("click", function(){
+    if(pipActive){ stopPip(); } else { startPip(); }
+  });
+
+  pipVideo.addEventListener("leavepictureinpicture", function(){
+    pipActive = false;
+    pipBtn.textContent = "Flutuar";
+  });
+  pipVideo.addEventListener("webkitpresentationmodechanged", function(){
+    if(pipVideo.webkitPresentationMode !== "picture-in-picture"){
+      pipActive = false;
+      pipBtn.textContent = "Flutuar";
+    }
+  });
+
+  // Desenho contínuo desde o carregamento — não espera nenhum clique
+  drawPipFrame();
+  // Cria a stream de vídeo assim que possível (autoplay mudo é permitido
+  // sem gesto do usuário); se o navegador bloquear, tenta de novo no 1º clique
+  ensurePipStream();
+
+  renderTabs();
+  renderDay();
+})();
+</script>
+</body>
+</html>
