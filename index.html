@@ -275,63 +275,51 @@ button{font-family:inherit;}
 
   var DEFAULT_DATA = [
     {
-      id:"d1", name:"Dia 1", label:"Pernas + Ombro",
+      id:"d1", name:"Dia 1", label:"Pernas (Quadríceps) + Push",
       mobility:["Mobilidade de tornozelo (dorsiflexão na parede) — 2x10 cada lado","Agachamento no cabo de vassoura — 1min","Ponte de glúteo — 2x12","Mobilidade de quadril 90/90 — 2x8 cada lado","Leg swings — 15 cada lado"],
       exercises:[
-        {name:"Agachamento", sets:3, reps:"10", rest:120},
+        {name:"Agachamento", sets:4, reps:"10", rest:120},
         {name:"Leg press", sets:3, reps:"12", rest:120},
         {name:"Cadeira extensora", sets:3, reps:"12", rest:90},
-        {name:"Mesa flexora", sets:3, reps:"12", rest:90},
+        {name:"Desenvolvimento com halteres", sets:3, reps:"10", rest:120},
         {name:"Elevação lateral", sets:4, reps:"15", rest:60},
-        {name:"Elevação frontal", sets:3, reps:"12", rest:60}
+        {name:"Tríceps corda", sets:3, reps:"12", rest:60}
       ]
     },
     {
-      id:"d2", name:"Dia 2", label:"Peito + Tríceps",
-      mobility:["Wall slides — 2x10","Rotação externa com elástico — 2x12","Face pull leve — 2x12","Mobilização torácica em 4 apoios — 2x8 cada lado"],
-      exercises:[
-        {name:"Supino reto", sets:3, reps:"10", rest:120},
-        {name:"Supino inclinado", sets:3, reps:"10", rest:120},
-        {name:"Crucifixo", sets:3, reps:"12", rest:90},
-        {name:"Tríceps corda", sets:3, reps:"12", rest:60},
-        {name:"Tríceps testa", sets:3, reps:"10", rest:90},
-        {name:"Mergulho / tríceps francês", sets:3, reps:"12", rest:60}
-      ]
-    },
-    {
-      id:"d3", name:"Dia 3", label:"Costas + Ombro post. + Bíceps",
+      id:"d2", name:"Dia 2", label:"Puxada (Costas) + Ombro post. + Bíceps",
       mobility:["Dead hang — 20 a 30s","Cat-cow — 2x10","Retração cervical — 2x10","Mobilização torácica com rotação — 2x8 cada lado"],
       exercises:[
-        {name:"Face pull", sets:4, reps:"15", rest:60},
-        {name:"Remada baixa", sets:3, reps:"12", rest:90},
         {name:"Puxada frente", sets:3, reps:"12", rest:90},
+        {name:"Remada baixa", sets:3, reps:"12", rest:90},
+        {name:"Face pull", sets:4, reps:"15", rest:60},
         {name:"Elevação posterior", sets:3, reps:"15", rest:60},
         {name:"Rosca direta", sets:3, reps:"12", rest:60},
         {name:"Rosca martelo", sets:3, reps:"12", rest:60}
       ]
     },
     {
-      id:"d4", name:"Dia 4", label:"Pernas + Ombro",
+      id:"d3", name:"Dia 3", label:"Pernas (Posterior/Glúteo) + Push",
       mobility:["Mobilidade de tornozelo — 2x10 cada lado","Agachamento no cabo de vassoura — 1min","Ponte de glúteo — 2x12","Mobilidade de quadril 90/90 — 2x8 cada lado","Leg swings — 15 cada lado"],
       exercises:[
         {name:"Stiff", sets:3, reps:"10", rest:120},
-        {name:"Cadeira flexora", sets:3, reps:"12", rest:90},
-        {name:"Avanço", sets:3, reps:"12", rest:90},
-        {name:"Cadeira extensora", sets:3, reps:"12", rest:90},
+        {name:"Mesa flexora", sets:3, reps:"12", rest:90},
+        {name:"Elevação pélvica", sets:3, reps:"12", rest:90},
+        {name:"Supino reto", sets:3, reps:"10", rest:120},
         {name:"Elevação lateral", sets:4, reps:"15", rest:60},
-        {name:"Elevação posterior", sets:3, reps:"15", rest:60}
+        {name:"Tríceps testa", sets:3, reps:"10", rest:90}
       ]
     },
     {
-      id:"d5", name:"Dia 5", label:"Ombro + Braços",
+      id:"d4", name:"Dia 4", label:"Superior completo + Ombro",
       mobility:["Wall slides — 2x10","Rotação externa com elástico — 2x12","Face pull leve — 2x12","Mobilização torácica em 4 apoios — 2x8 cada lado"],
       exercises:[
-        {name:"Desenvolvimento com halteres", sets:3, reps:"10", rest:120},
+        {name:"Supino inclinado", sets:3, reps:"10", rest:120},
+        {name:"Remada unilateral", sets:3, reps:"12", rest:90},
         {name:"Elevação lateral", sets:4, reps:"15", rest:60},
-        {name:"Elevação frontal", sets:3, reps:"12", rest:60},
+        {name:"Elevação posterior", sets:3, reps:"15", rest:60},
         {name:"Rosca alternada", sets:3, reps:"12", rest:60},
-        {name:"Tríceps corda", sets:3, reps:"12", rest:60},
-        {name:"Rosca Scott", sets:3, reps:"10", rest:60}
+        {name:"Tríceps francês", sets:3, reps:"12", rest:60}
       ]
     }
   ];
@@ -341,7 +329,7 @@ button{font-family:inherit;}
   }
   if(isStandalone()){ document.body.classList.add("standalone"); }
 
-  var STORAGE_KEY = "treino_app_data_v1";
+  var STORAGE_KEY = "treino_app_data_v2";
   var data = null;
   try{
     var saved = localStorage.getItem(STORAGE_KEY);
