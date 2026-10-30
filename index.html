@@ -109,6 +109,7 @@ h1,h2,h3{font-family:'Oswald',system-ui,sans-serif; text-transform:uppercase; le
   background:none; border:1px solid var(--border); color:var(--muted);
   border-radius:8px; padding:5px 10px; font-size:12px; cursor:pointer; font-family:inherit;
 }
+.editbtn.danger{border-color:var(--danger); color:var(--danger);}
 .mobility{
   display:flex; flex-direction:column; gap:6px; margin-bottom:14px;
   border-left:3px solid var(--ok); padding-left:10px;
@@ -391,6 +392,28 @@ button{font-family:inherit;}
     var head = document.createElement("div");
     head.className = "dayhead";
     head.innerHTML = "<h2>"+day.label+"</h2>";
+    var headActions = document.createElement("div");
+    headActions.style.display = "flex";
+    headActions.style.gap = "6px";
+
+    if(!editMode[day.id]){
+      var resetDayBtn = document.createElement("button");
+      resetDayBtn.className = "editbtn danger";
+      resetDayBtn.textContent = "Reiniciar treino";
+      resetDayBtn.addEventListener("click", function(){
+        if(!window.confirm("Reiniciar todo o treino de hoje? Isso zera o progresso de todos os exercícios.")) return;
+        day.exercises.forEach(function(ex){
+          ex._done = [];
+          ex._active = false;
+          ex._inProgress = false;
+          ex._open = false;
+        });
+        save();
+        renderDay();
+      });
+      headActions.appendChild(resetDayBtn);
+    }
+
     var editBtn = document.createElement("button");
     editBtn.className = "editbtn";
     editBtn.textContent = editMode[day.id] ? "Concluir edição" : "Editar";
@@ -398,7 +421,8 @@ button{font-family:inherit;}
       editMode[day.id] = !editMode[day.id];
       renderDay();
     });
-    head.appendChild(editBtn);
+    headActions.appendChild(editBtn);
+    head.appendChild(headActions);
     card.appendChild(head);
 
     var det = document.createElement("details");
