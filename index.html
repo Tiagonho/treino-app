@@ -305,7 +305,7 @@ button{font-family:inherit;}
         {name:"Stiff", sets:3, reps:"10", rest:120},
         {name:"Mesa flexora", sets:3, reps:"12", rest:90},
         {name:"Elevação pélvica", sets:3, reps:"12", rest:90},
-        {name:"Supino reto", sets:3, reps:"10", rest:120},
+        {name:"Supino reto", sets:4, reps:"10", rest:120},
         {name:"Elevação lateral", sets:4, reps:"15", rest:60},
         {name:"Tríceps testa", sets:3, reps:"10", rest:90}
       ]
@@ -314,12 +314,12 @@ button{font-family:inherit;}
       id:"d4", name:"Dia 4", label:"Superior completo + Ombro",
       mobility:["Wall slides — 2x10","Rotação externa com elástico — 2x12","Face pull leve — 2x12","Mobilização torácica em 4 apoios — 2x8 cada lado"],
       exercises:[
-        {name:"Supino inclinado", sets:3, reps:"10", rest:120},
+        {name:"Supino inclinado", sets:4, reps:"10", rest:120},
         {name:"Remada unilateral", sets:3, reps:"12", rest:90},
         {name:"Elevação lateral", sets:4, reps:"15", rest:60},
         {name:"Elevação posterior", sets:3, reps:"15", rest:60},
         {name:"Rosca alternada", sets:3, reps:"12", rest:60},
-        {name:"Tríceps francês", sets:3, reps:"12", rest:60}
+        {name:"Crucifixo", sets:3, reps:"12", rest:90}
       ]
     }
   ];
@@ -329,7 +329,7 @@ button{font-family:inherit;}
   }
   if(isStandalone()){ document.body.classList.add("standalone"); }
 
-  var STORAGE_KEY = "treino_app_data_v2";
+  var STORAGE_KEY = "treino_app_data_v3";
   var data = null;
   try{
     var saved = localStorage.getItem(STORAGE_KEY);
